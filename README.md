@@ -12,42 +12,38 @@ HDR で色が破綻する仕組みと、それを解消するトーンマップ�
 
 ## 技術スタック
 
-- C#: `.NET 10`（TFM `net10.0-windows10.0.22621.0` / 動作下限 `10.0.19041`）
-- WPF + WinForms: UI・トレイ常駐（`UseWPF` / `UseWindowsForms`）
-- .NET SDK (`dotnet`) + PowerShell: ビルド・実行
-- Vortice.Windows: `3.x`（Direct3D 11 / DXGI）
-  - [Vortice.Windows](https://github.com/amerkoleci/Vortice.Windows) 経由で D3D11 デバイスを扱う
-- CsWinRT: Windows.Graphics.Capture の projection（Windows TFM 同梱、明示的な依存追加は不要）
+- C# / .NET: `10`（TFM `net10.0-windows10.0.22621.0` / 動作下限 `10.0.19041`）
+- WPF + WinForms
+  - UI・トレイ常駐（`UseWPF` / `UseWindowsForms`）
+- Vortice.Windows: `3.x`
+  - Direct3D 11 / DXGI。D3D11 デバイスを扱う（[amerkoleci/Vortice.Windows](https://github.com/amerkoleci/Vortice.Windows)）
+- CsWinRT
+  - Windows.Graphics.Capture の projection（Windows TFM 同梱、明示的な依存追加は不要）
+- .NET SDK (`dotnet`) + PowerShell
+  - ビルド・実行
 
 ## セットアップ
-
-### 動作要件
 
 - Windows 10 2004 (build 19041) 以降 / Windows 11。ウィンドウ枠なしキャプチャは Windows 11 で有効。
 - self-contained ビルドなら **.NET ランタイム不要**。ソースからビルドする場合は **.NET SDK 10** が必要。
 
-### ビルド
-
 ```powershell
-# フレームワーク依存（.NET 10 ランタイムが必要）
-dotnet build src/Lukit/Lukit.csproj -c Release
+# .NET SDK 10 のインストール
+winget install Microsoft.DotNet.SDK.10
 
-# 単体で動く self-contained 実行ファイル（ランタイム不要）
-dotnet publish src/Lukit/Lukit.csproj -c Release -r win-x64 `
-  --self-contained true -p:PublishSingleFile=true `
-  -p:IncludeNativeLibrariesForSelfExtract=true
-# 出力: src/Lukit/bin/Release/net10.0-windows10.0.22621.0/win-x64/publish/Lukit.exe
+# ビルドと起動
+dotnet run --project src/Lukit/Lukit.csproj
 ```
 
 ## 使用方法
 
 `Lukit.exe` を起動するとトレイに常駐します。トレイアイコンの右クリックメニュー、または既定のホットキー：
 
-| 操作 | 既定のホットキー |
-|---|---|
-| 画面全体 | `Ctrl+Alt+1` |
-| 矩形選択 | `Ctrl+Alt+2` |
-| ウィンドウ | `Ctrl+Alt+3` |
+| 操作       | 既定のホットキー |
+| ---------- | ---------------- |
+| 画面全体   | `Ctrl+Alt+1`     |
+| 矩形選択   | `Ctrl+Alt+2`     |
+| ウィンドウ | `Ctrl+Alt+3`     |
 
 - 撮影結果は既定で `ピクチャ\Lukit`（例：`D:\Users\<name>\ピクチャ\Lukit`、既定フォルダの場所に従う）に PNG 保存＋クリップボードにコピー。
 - 全画面・矩形は **カーソルのあるディスプレイ** を対象にします。特定のディスプレイや全ディスプレイをまとめて撮るには、トレイメニューの **「Capture specific display」** から選択（各ディスプレイ個別 / All displays combined）。各モニタは自分の SDR 白色輝度で個別にトーンマップされるので、HDR/SDR 混在環境でも正しく合成されます。
@@ -76,6 +72,14 @@ dotnet run --project src/Lukit/Lukit.csproj
 
 # コンパイル確認（デバッグビルド）
 dotnet build src/Lukit/Lukit.csproj
+
+# フレームワーク依存（.NET 10 ランタイムが必要）
+dotnet build src/Lukit/Lukit.csproj -c Release
+
+# 単体で動く self-contained 実行ファイル（ランタイム不要）
+dotnet publish src/Lukit/Lukit.csproj -c Release -r win-x64 `
+  --self-contained true -p:PublishSingleFile=true `
+  -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
 ### ディレクトリ構成
