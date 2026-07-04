@@ -70,6 +70,12 @@ Lukit.exe --shot-window out.png [--hwnd <handle>]
 # 開発中の起動（デバッグビルドでそのまま実行）
 dotnet run --project src/Lukit/Lukit.csproj
 
+# 再ビルドして実行（--no-build 不要／--display-info は CLI 実行の一例）
+dotnet run --project src/Lukit/Lukit.csproj -- --display-info
+
+# 変更を監視して自動リビルド＆再実行
+dotnet watch --project src/Lukit/Lukit.csproj -- --display-info
+
 # コンパイル確認（デバッグビルド）
 dotnet build src/Lukit/Lukit.csproj
 
@@ -80,7 +86,24 @@ dotnet build src/Lukit/Lukit.csproj -c Release
 dotnet publish src/Lukit/Lukit.csproj -c Release -r win-x64 `
   --self-contained true -p:PublishSingleFile=true `
   -p:IncludeNativeLibrariesForSelfExtract=true
+
+# スタートアップ登録（ログオン時に常駐版を自動起動・管理者権限不要）
+Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' `
+  -Name Lukit -Value "`"$env:LOCALAPPDATA\Programs\Lukit\Lukit.exe`""
+
+# スタートアップ登録の解除
+Remove-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name Lukit
 ```
+
+### 常駐版と開発ビルドを分離する
+
+Lukit は GUI（トレイ常駐）と CLI を 1 バイナリに同居させているため、`bin\Debug` の `Lukit.exe` をそのまま常駐起動すると exe がロックされ、`dotnet run`（再ビルド）が失敗します。常駐用の実行ファイルを開発ビルドと別の場所に置き、握るファイルと書くファイルを分けることで衝突を避けます（仕組みの詳細は [常駐版と開発ビルドの分離](docs/dev-resident-build.md)）。
+
+- **常駐版を用意する**：上の **開発コマンド** の `dotnet publish` で作った self-contained 実行ファイルを `%LOCALAPPDATA%\Programs\Lukit\Lukit.exe` に配置し、そこから常駐起動する。
+- **開発ループ**：`bin\Debug` のまま素の `dotnet run` / `dotnet watch` で回す（`--no-build` は不要）。ロックは exe ファイル単位なので、常駐版が動いていても再ビルドは通る。
+- **常駐版を更新する**：再 publish → `%LOCALAPPDATA%\Programs\Lukit` へ上書きコピー → プロセスを入れ替える。
+- **GUI を触るテスト時のみ**：常駐版を終了してから `dotnet run` する。単一インスタンス Mutex 実装済みのため、終了しないと二重起動は情報ダイアログで弾かれる（CLI ユーティリティは常駐版と並行して実行可）。
+- **スタートアップ自動起動（任意）**：ログオン時に常駐版を起動したい場合は HKCU Run キーに登録する。登録/解除コマンドは上の **開発コマンド** を参照（管理者権限不要）。
 
 ### ディレクトリ構成
 
@@ -113,4 +136,5 @@ src/Lukit/
 ## 詳細・ドキュメント
 
 - [HDR とトーンマッピングの仕組み](docs/hdr-tone-mapping.md) — なぜ HDR で白飛びするのか、FP16 取り込み＋トーンマップによる解決方法、トーンマップ演算子、トラブルシューティング
+- [常駐版と開発ビルドの分離](docs/dev-resident-build.md) — GUI+CLI 同居バイナリの exe ロック問題と、常駐版を別パスに置いて開発ループと共存させる仕組み
 - [設計メモ](docs/design.md) — 初期の要件・設計草案

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Lukit.Capture;
 using Lukit.Display;
 using Lukit.Imaging;
@@ -17,6 +18,10 @@ internal static class Program
     [DllImport("kernel32.dll")]
     private static extern IntPtr GetStdHandle(int nStdHandle);
     private const int STD_OUTPUT_HANDLE = -11;
+
+    // Session-local name (no "Global\") → one tray instance per user session.
+    // A fixed GUID keeps it stable and collision-free with unrelated apps.
+    private const string SingleInstanceMutexName = "Lukit_SingleInstance_9C6B4D2E7A834F1B9E5A1D2C3B4A5F60";
 
     /// <summary>
     /// Attach to the launching console so Console.Write is visible — but only when
@@ -162,6 +167,20 @@ internal static class Program
 
     private static int RunGui()
     {
+        // Single-instance guard for the tray-resident GUI. The CLI utilities above
+        // return before reaching here, so diagnostics (--display-info etc.) stay
+        // runnable even while an instance is resident. Hold the mutex for the whole
+        // process lifetime; the OS releases the handle on exit.
+        using var singleInstance = new Mutex(initiallyOwned: true, SingleInstanceMutexName, out bool createdNew);
+        if (!createdNew)
+        {
+            // No main window to focus (tray-only) — just tell the user where it is.
+            System.Windows.MessageBox.Show(
+                "Lukit is already running. Look for its icon in the system tray.",
+                "Lukit", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            return 0;
+        }
+
         var app = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown };
         using var tray = new UI.TrayApp(app);
         app.Run();
