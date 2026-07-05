@@ -210,6 +210,7 @@ scripts/
 installer/
   Lukit.iss                  配布用 Inno Setup インストーラ定義（ユーザー単位・管理者権限不要）
 .github/workflows/
+  ci.yml                     main への push / PR で dotnet test を実行
   release.yml                v* タグで publish → portable zip / setup.exe → GitHub Release
 ```
 
