@@ -1,5 +1,11 @@
 # プロジェクト名
 
+タイトル直下に、CI 等のステータスバッジがあれば置く（`.github/workflows/*.yml` に対応する Actions バッジなど）。既存バッジは削らず維持し、対応するワークフローが消えたバッジだけ外す。
+
+```
+[![<workflow 名>](https://github.com/<owner>/<repo>/actions/workflows/<file>.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/<file>.yml)
+```
+
 プロジェクトが何であり、何を解決するのかを 1〜3 行で。必要なら主要機能を箇条書きで続ける。
 
 - 主要機能 1

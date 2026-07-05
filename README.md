@@ -1,5 +1,7 @@
 # Lukit Tools
 
+[![ci](https://github.com/mrk21/lukit-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/mrk21/lukit-tools/actions/workflows/ci.yml)
+
 HDR 環境でも**色が破綻しない**スクリーンショットを撮る、Windows 用の常駐ツール。
 Snipping Tool の代替として、HDR 有効時の「白飛び・色あせ（ミルキー）」問題を解決します。
 
