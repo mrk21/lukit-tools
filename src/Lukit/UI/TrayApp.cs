@@ -22,6 +22,7 @@ public sealed class TrayApp : IDisposable
     private readonly AppSettings _settings;
     private readonly CaptureController _controller;
     private readonly WF.NotifyIcon _tray;
+    private readonly ForegroundTracker _foreground;
     private HotkeyManager? _hotkeys;
 
     public TrayApp(Application app)
@@ -31,6 +32,9 @@ public sealed class TrayApp : IDisposable
         Strings.Apply(_settings.Language); // resolve the UI language before building any text
         _controller = new CaptureController(_settings);
         _controller.Notify += OnNotify;
+        // Track the foreground window continuously so menu-triggered window capture can target
+        // the window that was in front before the tray click stole the foreground (see below).
+        _foreground = new ForegroundTracker();
 
         _tray = new WF.NotifyIcon
         {
@@ -39,7 +43,7 @@ public sealed class TrayApp : IDisposable
             Visible = true,
             ContextMenuStrip = BuildMenu(),
         };
-        _tray.DoubleClick += (_, _) => Fire(_controller.CaptureFullscreenAsync);
+        _tray.DoubleClick += (_, _) => Fire(CaptureFullscreenFromMenuAsync);
 
         RegisterHotkeys();
     }
@@ -47,9 +51,9 @@ public sealed class TrayApp : IDisposable
     private WF.ContextMenuStrip BuildMenu()
     {
         var menu = new WF.ContextMenuStrip();
-        menu.Items.Add(Strings.MenuCaptureFullScreen(_settings.HotkeyFullscreen), null, (_, _) => Fire(_controller.CaptureFullscreenAsync));
+        menu.Items.Add(Strings.MenuCaptureFullScreen(_settings.HotkeyFullscreen), null, (_, _) => Fire(CaptureFullscreenFromMenuAsync));
         menu.Items.Add(Strings.MenuCaptureRegion(_settings.HotkeyRegion), null, (_, _) => Fire(CaptureRegionAsync));
-        menu.Items.Add(Strings.MenuCaptureWindow(_settings.HotkeyWindow), null, (_, _) => Fire(CaptureWindowAsync));
+        menu.Items.Add(Strings.MenuCaptureWindow(_settings.HotkeyWindow), null, (_, _) => Fire(CaptureWindowFromMenuAsync));
 
         var displayMenu = new WF.ToolStripMenuItem(Strings.MenuCaptureSpecificDisplay);
         displayMenu.DropDownItems.Add(Strings.MenuLoading);
@@ -103,6 +107,25 @@ public sealed class TrayApp : IDisposable
 
     // For hotkey-triggered window capture, the foreground window is the user's target.
     private Task CaptureWindowAsync() => _controller.CaptureWindowAsync(Monitors.GetForeground());
+
+    // For menu-triggered window capture, the tray click has already moved the foreground to the
+    // taskbar and our menu, so target the last real window the tracker saw before that (zero if
+    // none, which surfaces as a "no window to capture" notice).
+    private Task CaptureWindowFromMenuAsync()
+        => _controller.CaptureWindowAsync(_foreground.LastWindow);
+
+    // For menu/double-click full-screen capture, "the screen under the cursor" would always be the
+    // primary (taskbar) monitor, because clicking the tray moves the cursor there. Instead capture
+    // the monitor of the window the user was last using; fall back to the cursor's monitor if the
+    // tracker has nothing yet.
+    private Task CaptureFullscreenFromMenuAsync()
+    {
+        IntPtr hwnd = _foreground.LastWindow;
+        IntPtr hmon = hwnd != IntPtr.Zero
+            ? Monitors.GetMonitorForWindow(hwnd)
+            : Monitors.GetMonitorUnderCursor();
+        return _controller.CaptureMonitorAsync(hmon, crop: null);
+    }
 
     private void Fire(Func<Task> operation) => _ = RunSafe(operation);
 
@@ -167,6 +190,7 @@ public sealed class TrayApp : IDisposable
     public void Dispose()
     {
         _hotkeys?.Dispose();
+        _foreground.Dispose();
         _tray.Visible = false;
         _tray.Dispose();
         _controller.Dispose();
