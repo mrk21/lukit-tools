@@ -6,6 +6,11 @@
 
 なお、応答は日本語で行う。
 
+## Git
+
+- `git commit` / `git push` は、ユーザーから明示的に指示されない限り実行しない。ブランチ作成やステージング（`git add`）まではよいが、コミット・プッシュはユーザーの承認を待つ。
+- 安全網として、`git commit`/`git push` を検知したら承認プロンプトを出す `PreToolUse` フックを `.claude/settings.json` に入れてある（`permissionDecision: ask`）。誤ってコミットしようとしても、ユーザーが承認しない限り通らない。
+
 ## README.md の更新
 
 - `.csproj` の依存パッケージ・TFM・ビルド設定、開発/実行コマンド、ディレクトリ構成、技術スタックを変えたら、`/update-readme` で README.md の該当セクションを同期する。

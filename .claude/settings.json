@@ -1,5 +1,20 @@
 {
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "statusMessage": "git commit/push を確認中…",
+            "command": "try { $c = ([Console]::In.ReadToEnd() | ConvertFrom-Json).tool_input.command } catch { $c = '' }; if ($c -match 'git +(commit|push)') { @{hookSpecificOutput=@{hookEventName='PreToolUse';permissionDecision='ask';permissionDecisionReason='git commit/push は明示指示が必要です。ユーザーが明示的に指示した場合のみ承認してください。'}} | ConvertTo-Json -Compress -Depth 5 }"
+          }
+        ]
+      }
+    ]
   }
 }
