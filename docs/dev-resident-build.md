@@ -29,4 +29,4 @@ Lukit は **セッションローカルの単一インスタンス Mutex** を�
 
 ## 常駐版の更新とスタートアップ登録
 
-具体的なコマンド（publish → `%LOCALAPPDATA%\Programs\Lukit` へ上書きコピー → プロセス入れ替え、およびスタートアップ自動起動の HKCU Run キー登録）は [README の「開発方法」](../README.md#開発方法) にまとめている。
+常駐版の配置・更新とスタートアップ自動起動の登録は `scripts/install.ps1` にまとめてある（self-contained publish → `%LOCALAPPDATA%\Programs\Lukit` へ上書き、`-Startup` で HKCU Run キー登録、常駐プロセスは終了してから上書きする）。使い方は [README の「セットアップ」](../README.md#セットアップ) を参照。他人へ配る setup.exe / portable zip の発行手順は [README の「リリース」](../README.md#リリース) にある。

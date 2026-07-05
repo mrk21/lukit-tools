@@ -56,14 +56,14 @@ private static Window Build(string surface) => surface.ToLowerInvariant() switch
 
 ## ループ用ハーネス
 
-[`tools/visual-check.ps1`](../tools/visual-check.ps1) が A + B を 1 つのタイムスタンプ付き
+[`scripts/visual-check.ps1`](../scripts/visual-check.ps1) が A + B を 1 つのタイムスタンプ付き
 フォルダ（`artifacts/visual/<timestamp>/`、git 無視）にまとめて撮り、`manifest.md` を出す。
 
 ```powershell
-pwsh tools/visual-check.ps1              # A + B すべて
-pwsh tools/visual-check.ps1 -Only ui     # 決定的な UI サーフェスのみ
-pwsh tools/visual-check.ps1 -Only capture -Op aces
-pwsh tools/visual-check.ps1 -NoBuild     # ビルドを飛ばして既存 Debug バイナリを使う
+pwsh scripts/visual-check.ps1              # A + B すべて
+pwsh scripts/visual-check.ps1 -Only ui     # 決定的な UI サーフェスのみ
+pwsh scripts/visual-check.ps1 -Only capture -Op aces
+pwsh scripts/visual-check.ps1 -NoBuild     # ビルドを飛ばして既存 Debug バイナリを使う
 ```
 
 一度だけ `dotnet build` してから生成 exe を直接叩く（ショットごとに `dotnet run` すると
@@ -74,7 +74,7 @@ pwsh tools/visual-check.ps1 -NoBuild     # ビルドを飛ばして既存 Debug 
 
 Claude Code は PNG を直接 Read できるので、次のループが回る：
 
-1. `pwsh tools/visual-check.ps1` を実行
+1. `pwsh scripts/visual-check.ps1` を実行
 2. `artifacts/visual/<timestamp>/*.png` を Read して目視評価
 3. コード／パラメータを修正して 1 に戻る
 

@@ -23,11 +23,36 @@ HDR で色が破綻する仕組みと、それを解消するトーンマップ�
   - ビルド・実行
 - xUnit v3: `3.x`
   - 単体テスト（`test/Lukit.Tests`）
+- Inno Setup 6 + GitHub Actions
+  - 配布用インストーラのビルドと、`v*` タグでのリリース自動化（`installer/` / `.github/workflows/release.yml`）
 
 ## セットアップ
 
 - Windows 10 2004 (build 19041) 以降 / Windows 11。ウィンドウ枠なしキャプチャは Windows 11 で有効。
-- self-contained ビルドなら **.NET ランタイム不要**。ソースからビルドする場合は **.NET SDK 10** が必要。
+- 配布物（setup.exe / portable zip）は self-contained なので **.NET ランタイム不要**。ソースからビルドする場合のみ **.NET SDK 10** が必要。
+
+### インストール
+
+**配布物から入れる（推奨）** — [GitHub Releases](https://github.com/mrk21/lukit-tools/releases) から次のいずれかを取得します。
+
+- `Lukit-Setup-<version>-x64.exe` — Inno Setup 製インストーラ。ユーザー単位・**管理者権限不要**で `%LOCALAPPDATA%\Programs\Lukit` に導入し、スタートアップ自動起動やデスクトップショートカットを選べます。
+- `Lukit-portable-<version>-x64.zip` — 展開して `Lukit.exe` を起動するだけの持ち運び版。
+
+**自分の環境でビルドして入れる** — リポジトリを clone し、簡易インストーラを実行します（.NET SDK 10 が必要）。
+
+```powershell
+# self-contained 単一 exe をビルドして %LOCALAPPDATA%\Programs\Lukit へ配置し、起動する
+pwsh scripts/install.ps1
+
+# あわせてログオン時の自動起動を登録する（HKCU Run・管理者権限不要）
+pwsh scripts/install.ps1 -Startup
+```
+
+- `-NoLaunch` 配置後に起動しない ／ `-SkipBuild` 直近の publish 成果物（`artifacts\publish\Lukit.exe`）を使って配置だけ行う。
+- アンインストールは `pwsh scripts/uninstall.ps1`（設定 `%APPDATA%\Lukit` は既定で保持、`-PurgeSettings` で削除）。
+- self-contained 単一 exe は .NET ランタイムを同梱するため約 190MB になります（ランタイム不要と引き換えのサイズ）。
+
+### ソースからビルドして動かす（開発）
 
 ```powershell
 # .NET SDK 10 のインストール
@@ -96,24 +121,18 @@ dotnet watch test --project test/Lukit.Tests/Lukit.Tests.csproj
 dotnet test --collect:"XPlat Code Coverage"
 
 # ビジュアルチェック（A+B を撮って artifacts/visual/<timestamp>/ に manifest 出力）
-pwsh tools/visual-check.ps1
-pwsh tools/visual-check.ps1 -Only ui          # 決定的な UI サーフェスのみ（-Only all|ui|capture）
-pwsh tools/visual-check.ps1 -Op aces -NoBuild # 演算子を変えてビルド省略（-Op clip|reinhard|aces）
+pwsh scripts/visual-check.ps1
+pwsh scripts/visual-check.ps1 -Only ui          # 決定的な UI サーフェスのみ（-Only all|ui|capture）
+pwsh scripts/visual-check.ps1 -Op aces -NoBuild # 演算子を変えてビルド省略（-Op clip|reinhard|aces）
 
-# フレームワーク依存（.NET 10 ランタイムが必要）
-dotnet build src/Lukit/Lukit.csproj -c Release
+# self-contained 単一 exe をビルドして常駐用に配置（更新も同じ。詳細は「セットアップ」参照）
+pwsh scripts/install.ps1
 
-# 単体で動く self-contained 実行ファイル（ランタイム不要）
-dotnet publish src/Lukit/Lukit.csproj -c Release -r win-x64 `
-  --self-contained true -p:PublishSingleFile=true `
-  -p:IncludeNativeLibrariesForSelfExtract=true
+# 常駐版を削除（設定は保持、-PurgeSettings で設定も削除）
+pwsh scripts/uninstall.ps1
 
-# スタートアップ登録（ログオン時に常駐版を自動起動・管理者権限不要）
-Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' `
-  -Name Lukit -Value "`"$env:LOCALAPPDATA\Programs\Lukit\Lukit.exe`""
-
-# スタートアップ登録の解除
-Remove-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name Lukit
+# 配布物（setup.exe / portable zip）をローカルでビルド（要 Inno Setup 6。-InstallInno で自動導入）
+pwsh scripts/build-installer.ps1 -Version 1.2.3 -Portable
 ```
 
 ### 見た目の確認（ビジュアルチェック）
@@ -123,7 +142,7 @@ GUI の「見た目」を PNG に落として、人／AI が目視で回帰確�
 - **A. 製品の出力**：トーンマップ後のスクショそのもの（上の `--shot-*` / `--frame-stats`）。ライブの画面と HDR 状態に依存する動的チェック。
 - **B. アプリ自身の UI**：設定画面・矩形選択オーバーレイを **画面外レンダリング**して PNG 化（`--shot-ui`）。トレイ／単一インスタンス Mutex／ホットキーに触れず、決定的。UI が増えても [UiShot](src/Lukit/UI/UiShot.cs) にサーフェスを 1 つ足すだけで回り続ける。
 
-一括で撮ってマニフェストを出すハーネスが `tools/visual-check.ps1`（起動コマンドと代表的なバリアントは上の **開発コマンド** を参照）。
+一括で撮ってマニフェストを出すハーネスが `scripts/visual-check.ps1`（起動コマンドと代表的なバリアントは上の **開発コマンド** を参照）。
 
 出力 PNG はそのまま AI に渡して講評→修正のループに乗せられる（Claude Code は PNG を直接読める）。真の操作 e2e（ボタン押下→遷移）が必要になったら FlaUI 等の UIA ドライバを足す。詳細は [ビジュアルチェックの仕組み](docs/visual-check.md) を参照。
 
@@ -131,11 +150,24 @@ GUI の「見た目」を PNG に落として、人／AI が目視で回帰確�
 
 Lukit は GUI（トレイ常駐）と CLI を 1 バイナリに同居させているため、`bin\Debug` の `Lukit.exe` をそのまま常駐起動すると exe がロックされ、`dotnet run`（再ビルド）が失敗します。常駐用の実行ファイルを開発ビルドと別の場所に置き、握るファイルと書くファイルを分けることで衝突を避けます（仕組みの詳細は [常駐版と開発ビルドの分離](docs/dev-resident-build.md)）。
 
-- **常駐版を用意する**：上の **開発コマンド** の `dotnet publish` で作った self-contained 実行ファイルを `%LOCALAPPDATA%\Programs\Lukit\Lukit.exe` に配置し、そこから常駐起動する。
+- **常駐版を用意する**：`scripts/install.ps1` で self-contained 実行ファイルをビルドし、`%LOCALAPPDATA%\Programs\Lukit\Lukit.exe` に配置してそこから常駐起動する（[セットアップ](#セットアップ) 参照）。
 - **開発ループ**：`bin\Debug` のまま素の `dotnet run` / `dotnet watch` で回す（`--no-build` は不要）。ロックは exe ファイル単位なので、常駐版が動いていても再ビルドは通る。
-- **常駐版を更新する**：再 publish → `%LOCALAPPDATA%\Programs\Lukit` へ上書きコピー → プロセスを入れ替える。
+- **常駐版を更新する**：`scripts/install.ps1` を再実行する。常駐プロセスを終了してから `%LOCALAPPDATA%\Programs\Lukit` を上書きしてくれる。
 - **GUI を触るテスト時のみ**：常駐版を終了してから `dotnet run` する。単一インスタンス Mutex 実装済みのため、終了しないと二重起動は情報ダイアログで弾かれる（CLI ユーティリティは常駐版と並行して実行可）。
-- **スタートアップ自動起動（任意）**：ログオン時に常駐版を起動したい場合は HKCU Run キーに登録する。登録/解除コマンドは上の **開発コマンド** を参照（管理者権限不要）。
+- **スタートアップ自動起動（任意）**：`scripts/install.ps1 -Startup` で HKCU Run キーに登録、`scripts/uninstall.ps1` で解除（管理者権限不要）。
+
+### リリース
+
+配布物は GitHub Actions（[.github/workflows/release.yml](.github/workflows/release.yml)）で発行する。`v*` タグを push すると、self-contained 単一 exe を publish し、portable zip（`Lukit-portable-<version>-x64.zip`）と Inno Setup 製 setup.exe（`Lukit-Setup-<version>-x64.exe`）を作って GitHub Release に添付する。
+
+```powershell
+# 例：v1.2.3 を発行する
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+- GitHub の Actions から release ワークフローを手動起動（workflow_dispatch）し、バージョン（例 `1.2.3`）を渡してもよい（`v<version>` タグを作って発行する）。
+- 同じ成果物はローカルでも作れる（ワークフローもこのスクリプトを呼ぶ）。`scripts/build-installer.ps1`（要 Inno Setup 6。未導入なら `-InstallInno` で winget 導入）で publish → setup.exe を `dist\` に出力する。コマンドは上の **開発コマンド** を参照。
 
 ### ディレクトリ構成
 
@@ -168,6 +200,15 @@ test/Lukit.Tests/            src/Lukit/ の構成をミラーした xUnit v3 テ
     HdrFrameTests.cs         HdrFrame の単体テスト
   Imaging/
     ToneMapperTests.cs       ToneMapper の単体テスト
+scripts/
+  install.ps1                自分用の簡易インストーラ（self-contained exe → %LOCALAPPDATA%）
+  uninstall.ps1              install.ps1 で入れた常駐版の削除
+  build-installer.ps1        配布物（setup.exe / portable zip）をローカルでビルド
+  visual-check.ps1           ビジュアルチェックのハーネス
+installer/
+  Lukit.iss                  配布用 Inno Setup インストーラ定義（ユーザー単位・管理者権限不要）
+.github/workflows/
+  release.yml                v* タグで publish → portable zip / setup.exe → GitHub Release
 ```
 
 ## 詳細・ドキュメント

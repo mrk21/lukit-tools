@@ -35,7 +35,7 @@ GUI の見た目を PNG に落として人／AI が目視で回帰確認する�
 - **A. 製品の出力**（トーンマップ後のスクショ）: 上の `--shot-*` / `--frame-stats`。ライブ画面・HDR 状態に依存する動的チェック。
 - **B. アプリ自身の UI**（設定画面・矩形選択オーバーレイ）: `Lukit.exe --shot-ui <settings|overlay> out.png` で**画面外レンダリング**して PNG 化。トレイ／単一インスタンス Mutex／ホットキーに触れず決定的。UI を足したら [UiShot](src/Lukit/UI/UiShot.cs) の `Build` にサーフェスを 1 分岐足すだけ。
 
-一括で撮るなら `pwsh tools/visual-check.ps1`（A+B を `artifacts/visual/<timestamp>/` に出して `manifest.md`）。出た PNG を Read して講評→修正で回す。UI 変更の確認を頼まれたらこのループを使う。これは目視ループであって、上記の CI 自動ゲートとは別（そちらは未整備）。真の操作 e2e（ボタン押下→遷移）が要るなら FlaUI 等の UIA ドライバを足す。
+一括で撮るなら `pwsh scripts/visual-check.ps1`（A+B を `artifacts/visual/<timestamp>/` に出して `manifest.md`）。出た PNG を Read して講評→修正で回す。UI 変更の確認を頼まれたらこのループを使う。これは目視ループであって、上記の CI 自動ゲートとは別（そちらは未整備）。真の操作 e2e（ボタン押下→遷移）が要るなら FlaUI 等の UIA ドライバを足す。
 
 ## 複雑度と設計見直し
 

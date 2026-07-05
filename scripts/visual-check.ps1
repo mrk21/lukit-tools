@@ -17,9 +17,9 @@
     PNGs) to Claude Code — it can Read PNGs directly — and iterate.
 
 .EXAMPLE
-    pwsh tools/visual-check.ps1
-    pwsh tools/visual-check.ps1 -Only ui -Op aces
-    pwsh tools/visual-check.ps1 -OutDir artifacts/visual/run1
+    pwsh scripts/visual-check.ps1
+    pwsh scripts/visual-check.ps1 -Only ui -Op aces
+    pwsh scripts/visual-check.ps1 -OutDir artifacts/visual/run1
 #>
 [CmdletBinding()]
 param(

@@ -1,0 +1,64 @@
+name: release
+
+# `v*` タグを push すると、self-contained 単一 exe をビルドして
+#   - Lukit-Setup-<version>-x64.exe  (Inno Setup 製インストーラ)
+#   - Lukit-portable-<version>-x64.zip (置くだけの portable 版)
+# を GitHub Release に添付する。手動実行（workflow_dispatch）ではタグ v<version> を作って同様に発行する。
+#
+# 成果物のビルド自体は scripts/build-installer.ps1 に集約している（ローカルと同じ手順）。
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 1.2.3) — v タグを作って発行します'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Resolve version and tag
+        id: ver
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -like 'refs/tags/*') {
+            $tag = $env:GITHUB_REF -replace '^refs/tags/',''
+            $version = $tag -replace '^v',''
+          } else {
+            $version = '${{ github.event.inputs.version }}'
+            $tag = "v$version"
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=$tag"         >> $env:GITHUB_OUTPUT
+          Write-Host "version=$version tag=$tag"
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Build installer + portable zip
+        shell: pwsh
+        run: pwsh scripts/build-installer.ps1 -Version '${{ steps.ver.outputs.version }}' -Portable
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $assets = Get-ChildItem dist -Include *.exe, *.zip -Recurse | Select-Object -ExpandProperty FullName
+          gh release create '${{ steps.ver.outputs.tag }}' $assets `
+            --title '${{ steps.ver.outputs.tag }}' `
+            --generate-notes

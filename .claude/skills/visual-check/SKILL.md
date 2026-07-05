@@ -21,10 +21,10 @@ B は [`UI/UiShot.cs`](../../../src/Lukit/UI/UiShot.cs) が `RenderTargetBitmap`
 1. **撮る。** 原則ハーネスで一括:
 
    ```powershell
-   pwsh tools/visual-check.ps1              # A + B を artifacts/visual/<timestamp>/ に出力し manifest.md を書く
-   pwsh tools/visual-check.ps1 -Only ui     # 決定的な UI サーフェスのみ（UI をいじったとき用）
-   pwsh tools/visual-check.ps1 -Only capture -Op aces   # ライブ出力のみ、演算子指定
-   pwsh tools/visual-check.ps1 -NoBuild     # ビルドを飛ばして既存 Debug バイナリを使う
+   pwsh scripts/visual-check.ps1              # A + B を artifacts/visual/<timestamp>/ に出力し manifest.md を書く
+   pwsh scripts/visual-check.ps1 -Only ui     # 決定的な UI サーフェスのみ（UI をいじったとき用）
+   pwsh scripts/visual-check.ps1 -Only capture -Op aces   # ライブ出力のみ、演算子指定
+   pwsh scripts/visual-check.ps1 -NoBuild     # ビルドを飛ばして既存 Debug バイナリを使う
    ```
 
    単発で足りるなら個別に叩いてもよい（例: `src/Lukit/bin/Debug/<TFM>/Lukit.exe --shot-ui settings out.png`）。
@@ -54,7 +54,7 @@ private static Window Build(string surface) => surface.ToLowerInvariant() switch
 };
 ```
 
-ハーネスにも一括対象として名前を加えたいなら [`tools/visual-check.ps1`](../../../tools/visual-check.ps1) の UI サーフェス列（`'settings', 'overlay'`）に足す。
+ハーネスにも一括対象として名前を加えたいなら [`scripts/visual-check.ps1`](../../../scripts/visual-check.ps1) の UI サーフェス列（`'settings', 'overlay'`）に足す。
 
 ## このスキルの範囲外
 

@@ -12,5 +12,8 @@
 *.nupkg
 packages/
 
-# Visual-check artifacts (tools/visual-check.ps1 output)
+# Visual-check artifacts (scripts/visual-check.ps1 output)
 artifacts/
+
+# Installer / release output (installer/Lukit.iss, scripts/install.ps1)
+dist/
