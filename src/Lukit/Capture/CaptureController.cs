@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -117,19 +118,9 @@ public sealed class CaptureController : IDisposable
                 return;
             }
 
-            int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
-            foreach (var m in monitors)
-            {
-                minX = Math.Min(minX, m.Bounds.Left);
-                minY = Math.Min(minY, m.Bounds.Top);
-                maxX = Math.Max(maxX, m.Bounds.Right);
-                maxY = Math.Max(maxY, m.Bounds.Bottom);
-            }
-            int totalW = maxX - minX, totalH = maxY - minY;
-            int stride = totalW * 4;
-            var canvas = new byte[(long)totalH * stride];
-            for (long i = 3; i < canvas.LongLength; i += 4) canvas[i] = 255; // opaque black in any gaps
-
+            // Capture + tone-map each monitor (environment-dependent), then hand the tiles
+            // to the pure compositor for the virtual-desktop layout (see DesktopComposite).
+            var tiles = new List<MonitorTile>(monitors.Count);
             foreach (var m in monitors)
             {
                 AdvancedColorInfo color = DisplayInfo.GetForMonitor(m.Handle);
@@ -137,30 +128,16 @@ public sealed class CaptureController : IDisposable
                 HdrFrame frame = await Engine.CaptureAsync(item, _settings.IncludeCursor).ConfigureAwait(false);
                 ToneMapSettings ts = _settings.ToToneMapSettings(color.SdrWhiteNits);
                 byte[] bgra = await Task.Run(() => ToneMapper.ToBgra32(frame, ts, out _)).ConfigureAwait(false);
-
-                Blit(bgra, frame.Width, frame.Height, canvas, stride,
-                    m.Bounds.Left - minX, m.Bounds.Top - minY, totalW, totalH);
+                tiles.Add(new MonitorTile(m.Bounds, bgra, frame.Width, frame.Height));
             }
 
-            BitmapSource bmp = ImageOutput.CreateBitmap(canvas, totalW, totalH, stride);
+            ComposedImage composed = DesktopComposite.Compose(tiles);
+            BitmapSource bmp = ImageOutput.CreateBitmap(composed.Bgra, composed.Width, composed.Height, composed.Stride);
             await OutputAsync(bmp, "all").ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             Notify?.Invoke("Capture failed: " + ex.Message, true);
-        }
-    }
-
-    private static void Blit(byte[] src, int sw, int sh, byte[] dst, int dstStride, int offX, int offY, int dstW, int dstH)
-    {
-        int srcStride = sw * 4;
-        for (int y = 0; y < sh; y++)
-        {
-            int dy = offY + y;
-            if (dy < 0 || dy >= dstH || offX < 0) continue;
-            int copyW = Math.Min(sw, dstW - offX);
-            if (copyW <= 0) continue;
-            Array.Copy(src, (long)y * srcStride, dst, (long)dy * dstStride + (long)offX * 4, (long)copyW * 4);
         }
     }
 
