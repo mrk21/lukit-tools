@@ -62,11 +62,18 @@ public static class UiShot
 
     private static Window Build(string surface) => surface.ToLowerInvariant() switch
     {
-        "settings" => new SettingsWindow(AppSettings.Load()),
+        "settings" => BuildSettings(),
         "overlay" => BuildOverlay(),
         _ => throw new ArgumentException(
             $"Unknown UI surface '{surface}'. Known surfaces: settings, overlay."),
     };
+
+    private static Window BuildSettings()
+    {
+        var settings = AppSettings.Load();
+        Localization.Strings.Apply(settings.Language); // render in the saved UI language
+        return new SettingsWindow(settings);
+    }
 
     private static Window BuildOverlay()
     {

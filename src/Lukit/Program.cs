@@ -197,8 +197,8 @@ internal static class Program
         {
             // No main window to focus (tray-only) — just tell the user where it is.
             System.Windows.MessageBox.Show(
-                "Lukit is already running. Look for its icon in the system tray.",
-                "Lukit", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                Localization.Strings.AlreadyRunning,
+                Localization.Strings.AppShortName, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             return 0;
         }
 

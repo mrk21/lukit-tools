@@ -110,6 +110,18 @@ public sealed class HotkeyManager : IDisposable
         return true;
     }
 
+    /// <summary>
+    /// Unregisters every hotkey but keeps the message window alive so the manager can be
+    /// re-registered. Lets settings changes take effect live, without an app restart.
+    /// </summary>
+    public void Clear()
+    {
+        foreach (int id in _actions.Keys)
+            UnregisterHotKey(_source.Handle, id);
+        _actions.Clear();
+        _nextId = 1;
+    }
+
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         if (msg == WM_HOTKEY && _actions.TryGetValue(wParam.ToInt32(), out Action? action))
@@ -122,9 +134,7 @@ public sealed class HotkeyManager : IDisposable
 
     public void Dispose()
     {
-        foreach (int id in _actions.Keys)
-            UnregisterHotKey(_source.Handle, id);
-        _actions.Clear();
+        Clear();
         _source.RemoveHook(WndProc);
         _source.Dispose();
     }

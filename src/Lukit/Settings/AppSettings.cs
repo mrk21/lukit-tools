@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Lukit.Imaging;
+using Lukit.Localization;
 
 namespace Lukit.Settings;
 
@@ -43,6 +44,11 @@ public sealed class AppSettings
     public string HotkeyFullscreen { get; set; } = "Ctrl+Alt+1";
     public string HotkeyRegion { get; set; } = "Ctrl+Alt+2";
     public string HotkeyWindow { get; set; } = "Ctrl+Alt+3";
+
+    // --- Language ---
+
+    /// <summary>UI language. Default follows the OS UI language; see <see cref="Strings.Apply"/>.</summary>
+    public LanguagePreference Language { get; set; } = LanguagePreference.Auto;
 
     // --- Persistence ---
 

@@ -7,6 +7,7 @@ using System.Windows.Media.Imaging;
 using Lukit.Display;
 using Lukit.Imaging;
 using Lukit.Interop;
+using Lukit.Localization;
 using Lukit.Settings;
 
 namespace Lukit.Capture;
@@ -62,7 +63,7 @@ public sealed class CaptureController : IDisposable
         }
         catch (Exception ex)
         {
-            Notify?.Invoke("Capture failed: " + ex.Message, true);
+            Notify?.Invoke(Strings.CaptureFailed(ex.Message), true);
         }
     }
 
@@ -93,7 +94,7 @@ public sealed class CaptureController : IDisposable
         }
         catch (Exception ex)
         {
-            Notify?.Invoke("Capture failed: " + ex.Message, true);
+            Notify?.Invoke(Strings.CaptureFailed(ex.Message), true);
         }
     }
 
@@ -109,7 +110,7 @@ public sealed class CaptureController : IDisposable
             var monitors = Monitors.GetAllMonitors();
             if (monitors.Count == 0)
             {
-                Notify?.Invoke("No monitors found", true);
+                Notify?.Invoke(Strings.NoMonitorsFound, true);
                 return;
             }
             if (monitors.Count == 1)
@@ -137,7 +138,7 @@ public sealed class CaptureController : IDisposable
         }
         catch (Exception ex)
         {
-            Notify?.Invoke("Capture failed: " + ex.Message, true);
+            Notify?.Invoke(Strings.CaptureFailed(ex.Message), true);
         }
     }
 
@@ -147,7 +148,7 @@ public sealed class CaptureController : IDisposable
         {
             if (hwnd == IntPtr.Zero)
             {
-                Notify?.Invoke("No window to capture", true);
+                Notify?.Invoke(Strings.NoWindowToCapture, true);
                 return;
             }
             IntPtr hmon = Monitors.GetMonitorForWindow(hwnd);
@@ -158,7 +159,7 @@ public sealed class CaptureController : IDisposable
         }
         catch (Exception ex)
         {
-            Notify?.Invoke("Capture failed: " + ex.Message, true);
+            Notify?.Invoke(Strings.CaptureFailed(ex.Message), true);
         }
     }
 
@@ -189,8 +190,8 @@ public sealed class CaptureController : IDisposable
             await OnUiAsync(() => ImageOutput.CopyToClipboard(bmp)).ConfigureAwait(false);
 
         string msg = savedPath is not null
-            ? $"Saved {Path.GetFileName(savedPath)}" + (_settings.CopyToClipboard ? " • copied" : "")
-            : "Copied to clipboard";
+            ? Strings.SavedFile(Path.GetFileName(savedPath), _settings.CopyToClipboard)
+            : Strings.CopiedToClipboard;
         Notify?.Invoke(msg, false);
     }
 

@@ -74,7 +74,7 @@ dotnet run --project src/Lukit/Lukit.csproj
 
 - 撮影結果は既定で `ピクチャ\Lukit`（例：`D:\Users\<name>\ピクチャ\Lukit`、既定フォルダの場所に従う）に PNG 保存＋クリップボードにコピー。
 - 全画面・矩形は **カーソルのあるディスプレイ** を対象にします。特定のディスプレイや全ディスプレイをまとめて撮るには、トレイメニューの **「Capture specific display」** から選択（各ディスプレイ個別 / All displays combined）。各モニタは自分の SDR 白色輝度で個別にトーンマップされるので、HDR/SDR 混在環境でも正しく合成されます。
-- トレイメニューの **Settings…** で、SDR 白色輝度（自動/手動）、トーンマップ演算子、保存先、出力方法、ホットキーを変更できます（ホットキー変更は再起動で反映）。
+- トレイメニューの **Settings…** で、表示言語（自動＝OS 設定／英語／日本語）、SDR 白色輝度（自動/手動）、トーンマップ演算子、保存先、出力方法、ホットキーを変更できます。変更は設定画面を閉じた時点で即反映（表示言語・ホットキーも再起動不要）。UI の既定言語は OS の表示言語（日本語環境なら日本語、それ以外は英語）です。
 
 保存画像が暗い/明るい、ホットキーが効かない等は [トラブルシューティング](docs/hdr-tone-mapping.md#トラブルシューティング) を参照。
 
@@ -190,6 +190,8 @@ src/Lukit/
     HotkeyManager.cs         グローバルホットキー
   Settings/
     AppSettings.cs           設定（保存先・演算子・ホットキー等）を JSON で永続化
+  Localization/
+    Strings.cs               GUI 文言の日英カタログ＋OS UI 言語からの言語判定
   UI/
     TrayApp.cs               トレイ常駐・メニュー・配線
     SelectionOverlay.cs      矩形選択オーバーレイ
