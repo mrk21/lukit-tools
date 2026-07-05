@@ -47,6 +47,7 @@ internal static class Program
                 case "--shot-window": EnsureConsole(); return RunCliWindow(args);
                 case "--shot-monitor": EnsureConsole(); return RunCliMonitor(args);
                 case "--shot-all": EnsureConsole(); return RunCliAll(args);
+                case "--shot-ui": EnsureConsole(); return RunShotUi(args);
                 case "--display-info": EnsureConsole(); return RunDisplayInfo();
                 case "--frame-stats": EnsureConsole(); return RunFrameStats();
                 case "--help" or "-h" or "/?": EnsureConsole(); PrintUsage(); return 0;
@@ -66,6 +67,7 @@ internal static class Program
             "  --shot-monitor <index> <out.png>   Capture a specific display (see --display-info order)\n" +
             "  --shot-all <out.png>               Capture all displays combined\n" +
             "  --shot-window <out.png> [--hwnd <handle>]\n" +
+            "  --shot-ui <settings|overlay> <out.png>   Render an app UI surface to PNG (off-screen)\n" +
             "  --display-info       Show HDR state and SDR white level per monitor\n" +
             "  --frame-stats        Capture the primary monitor and print scRGB statistics");
     }
@@ -161,6 +163,25 @@ internal static class Program
         catch (Exception ex)
         {
             Console.Error.WriteLine("window capture failed: " + ex.Message);
+            return 1;
+        }
+    }
+
+    private static int RunShotUi(string[] args)
+    {
+        if (args.Length < 3)
+        {
+            Console.Error.WriteLine("usage: --shot-ui <settings|overlay> <out.png>");
+            return 1;
+        }
+
+        try
+        {
+            return UI.UiShot.Capture(args[1], args[2]);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine("ui shot failed: " + ex.Message);
             return 1;
         }
     }

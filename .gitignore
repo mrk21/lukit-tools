@@ -11,3 +11,6 @@
 # NuGet
 *.nupkg
 packages/
+
+# Visual-check artifacts (tools/visual-check.ps1 output)
+artifacts/

@@ -26,7 +26,16 @@
 - `Lukit.exe --frame-stats` … プライマリを撮って scRGB 統計を表示
 - `Lukit.exe --shot-fullscreen out.png [--op clip|reinhard|aces] [--sdr-white <nits>]` … 実際の保存画像を出して見る
 
-自動の視覚回帰スイートはまだ無い。必要になったら、固定入力の `HdrFrame`（合成 scRGB データ）→ `ToneMapper.ToBgra32` → PNG のゴールデン比較として `test/Lukit.Tests` 側に足すのが素直（実 GPU 不要で決定的にできる）。
+CI で自動失敗する視覚回帰ゲートはまだ無い。必要になったら、固定入力の `HdrFrame`（合成 scRGB データ）→ `ToneMapper.ToBgra32` → PNG のゴールデン比較として `test/Lukit.Tests` 側に足すのが素直（実 GPU 不要で決定的にできる）。
+
+## 見た目の確認（ビジュアルチェック）
+
+GUI の見た目を PNG に落として人／AI が目視で回帰確認するループがある。手順・設計は [docs/visual-check.md](docs/visual-check.md)。対象は 2 種類:
+
+- **A. 製品の出力**（トーンマップ後のスクショ）: 上の `--shot-*` / `--frame-stats`。ライブ画面・HDR 状態に依存する動的チェック。
+- **B. アプリ自身の UI**（設定画面・矩形選択オーバーレイ）: `Lukit.exe --shot-ui <settings|overlay> out.png` で**画面外レンダリング**して PNG 化。トレイ／単一インスタンス Mutex／ホットキーに触れず決定的。UI を足したら [UiShot](src/Lukit/UI/UiShot.cs) の `Build` にサーフェスを 1 分岐足すだけ。
+
+一括で撮るなら `pwsh tools/visual-check.ps1`（A+B を `artifacts/visual/<timestamp>/` に出して `manifest.md`）。出た PNG を Read して講評→修正で回す。UI 変更の確認を頼まれたらこのループを使う。これは目視ループであって、上記の CI 自動ゲートとは別（そちらは未整備）。真の操作 e2e（ボタン押下→遷移）が要るなら FlaUI 等の UIA ドライバを足す。
 
 ## 複雑度と設計見直し
 

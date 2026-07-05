@@ -62,6 +62,8 @@ Lukit.exe --shot-fullscreen out.png [--sdr-white <nits>] [--op clip|reinhard|ace
 Lukit.exe --shot-monitor <index> out.png # 特定ディスプレイ（順番は --display-info 参照）
 Lukit.exe --shot-all out.png             # 全ディスプレイを合成
 Lukit.exe --shot-window out.png [--hwnd <handle>]
+Lukit.exe --shot-ui settings out.png     # 設定ウィンドウを画面外レンダリングして PNG 化
+Lukit.exe --shot-ui overlay out.png      # 矩形選択オーバーレイを PNG 化
 ```
 
 ## 開発方法
@@ -93,6 +95,11 @@ dotnet watch test --project test/Lukit.Tests/Lukit.Tests.csproj
 # カバレッジ付きで実行（任意）
 dotnet test --collect:"XPlat Code Coverage"
 
+# ビジュアルチェック（A+B を撮って artifacts/visual/<timestamp>/ に manifest 出力）
+pwsh tools/visual-check.ps1
+pwsh tools/visual-check.ps1 -Only ui          # 決定的な UI サーフェスのみ（-Only all|ui|capture）
+pwsh tools/visual-check.ps1 -Op aces -NoBuild # 演算子を変えてビルド省略（-Op clip|reinhard|aces）
+
 # フレームワーク依存（.NET 10 ランタイムが必要）
 dotnet build src/Lukit/Lukit.csproj -c Release
 
@@ -108,6 +115,17 @@ Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' `
 # スタートアップ登録の解除
 Remove-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name Lukit
 ```
+
+### 見た目の確認（ビジュアルチェック）
+
+GUI の「見た目」を PNG に落として、人／AI が目視で回帰確認できるようにしています。対象は 2 種類：
+
+- **A. 製品の出力**：トーンマップ後のスクショそのもの（上の `--shot-*` / `--frame-stats`）。ライブの画面と HDR 状態に依存する動的チェック。
+- **B. アプリ自身の UI**：設定画面・矩形選択オーバーレイを **画面外レンダリング**して PNG 化（`--shot-ui`）。トレイ／単一インスタンス Mutex／ホットキーに触れず、決定的。UI が増えても [UiShot](src/Lukit/UI/UiShot.cs) にサーフェスを 1 つ足すだけで回り続ける。
+
+一括で撮ってマニフェストを出すハーネスが `tools/visual-check.ps1`（起動コマンドと代表的なバリアントは上の **開発コマンド** を参照）。
+
+出力 PNG はそのまま AI に渡して講評→修正のループに乗せられる（Claude Code は PNG を直接読める）。真の操作 e2e（ボタン押下→遷移）が必要になったら FlaUI 等の UIA ドライバを足す。詳細は [ビジュアルチェックの仕組み](docs/visual-check.md) を参照。
 
 ### 常駐版と開発ビルドを分離する
 
@@ -156,4 +174,5 @@ test/Lukit.Tests/            src/Lukit/ の構成をミラーした xUnit v3 テ
 
 - [HDR とトーンマッピングの仕組み](docs/hdr-tone-mapping.md) — なぜ HDR で白飛びするのか、FP16 取り込み＋トーンマップによる解決方法、トーンマップ演算子、トラブルシューティング
 - [常駐版と開発ビルドの分離](docs/dev-resident-build.md) — GUI+CLI 同居バイナリの exe ロック問題と、常駐版を別パスに置いて開発ループと共存させる仕組み
+- [ビジュアルチェックの仕組み](docs/visual-check.md) — UI を画面外レンダリングで PNG 化する仕組み、AI ループへの組み込み、サーフェスの増やし方、FlaUI への拡張余地
 - [設計メモ](docs/design.md) — 初期の要件・設計草案
