@@ -21,6 +21,8 @@ HDR で色が破綻する仕組みと、それを解消するトーンマップ�
   - Windows.Graphics.Capture の projection（Windows TFM 同梱、明示的な依存追加は不要）
 - .NET SDK (`dotnet`) + PowerShell
   - ビルド・実行
+- xUnit v3: `3.x`
+  - 単体テスト（`test/Lukit.Tests`）
 
 ## セットアップ
 
@@ -79,6 +81,18 @@ dotnet watch --project src/Lukit/Lukit.csproj -- --display-info
 # コンパイル確認（デバッグビルド）
 dotnet build src/Lukit/Lukit.csproj
 
+# テスト実行（リポジトリ直下。Lukit.slnx を自動で拾う）
+dotnet test
+
+# テストを絞り込んで実行
+dotnet test --filter "FullyQualifiedName~ToneMapper"
+
+# テストを監視して自動再実行
+dotnet watch test --project test/Lukit.Tests/Lukit.Tests.csproj
+
+# カバレッジ付きで実行（任意）
+dotnet test --collect:"XPlat Code Coverage"
+
 # フレームワーク依存（.NET 10 ランタイムが必要）
 dotnet build src/Lukit/Lukit.csproj -c Release
 
@@ -131,6 +145,11 @@ src/Lukit/
     SelectionOverlay.cs      矩形選択オーバーレイ
     SettingsWindow.cs        設定画面
     TrayIconFactory.cs       トレイアイコンを実行時に生成
+test/Lukit.Tests/            src/Lukit/ の構成をミラーした xUnit v3 テスト
+  Capture/
+    HdrFrameTests.cs         HdrFrame の単体テスト
+  Imaging/
+    ToneMapperTests.cs       ToneMapper の単体テスト
 ```
 
 ## 詳細・ドキュメント
